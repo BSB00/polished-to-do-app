@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Daylight — your to-do list</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f7f8fa;
+      --surface: #fff;
+      --surface-soft: #f5f6f8;
+      --ink: #20242c;
+      --muted: #858b96;
+      --line: #e9ebef;
+      --accent: #6b67e8;
+      --accent-soft: #efefff;
+      --green: #318b68;
+      --shadow: 0 18px 55px rgb(26 33 53 / 8%), 0 2px 8px rgb(26 33 53 / 3%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --page: #15171c;
+        --surface: #20232a;
+        --surface-soft: #292c34;
+        --ink: #eff0f4;
+        --muted: #a0a5b0;
+        --line: #343740;
+        --accent: #aaa6ff;
+        --accent-soft: #34324c;
+        --green: #77c9a5;
+        --shadow: 0 18px 55px rgb(0 0 0 / 25%), 0 2px 8px rgb(0 0 0 / 12%);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 72px 20px 56px;
+      background:
+        radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 42%),
+        var(--page);
+      color: var(--ink);
+      font: 15px/1.5 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app { width: min(100%, 480px); margin: 0 auto; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .brand-mark {
+      display: grid;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+    }
+    .brand-mark svg { width: 15px; height: 15px; }
+
+    header { margin-bottom: 28px; }
+    h1 {
+      margin: 28px 0 5px;
+      font-size: clamp(29px, 7vw, 36px);
+      font-weight: 680;
+      letter-spacing: -.055em;
+      line-height: 1.15;
+    }
+    .subtitle { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .list-card {
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .composer {
+      display: flex;
+      gap: 10px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .composer input {
+      width: 100%;
+      min-width: 0;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      background: var(--surface-soft);
+      color: var(--ink);
+      font: inherit;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .composer input::placeholder { color: var(--muted); }
+    .composer input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 17%, transparent);
+    }
+    .add-button {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      place-items: center;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: transform .18s, filter .18s;
+    }
+    .add-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .add-button:active { transform: scale(.95); }
+    .add-button svg { width: 19px; height: 19px; }
+
+    .list-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 9px;
+    }
+    .list-heading h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .035em;
+    }
+    .remaining { color: var(--muted); font-size: 12px; }
+    .task-list { padding: 0 10px 8px; }
+    .task {
+      display: flex;
+      min-height: 56px;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 10px;
+      border-radius: 11px;
+      animation: arrive .25s ease both;
+      transition: background .2s, opacity .2s;
+    }
+    .task:hover { background: var(--surface-soft); }
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .check {
+      appearance: none;
+      position: relative;
+      display: grid;
+      width: 21px;
+      height: 21px;
+      flex: 0 0 21px;
+      place-items: center;
+      margin: 0;
+      border: 1.5px solid #c9cdd5;
+      border-radius: 7px;
+      background: transparent;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .check::after {
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      content: "";
+      opacity: 0;
+      transform: rotate(45deg) scale(.5);
+      transition: opacity .16s, transform .2s cubic-bezier(.2, 1.7, .5, 1);
+    }
+    .check:checked { border-color: var(--green); background: var(--green); animation: tick .28s ease; }
+    .check:checked::after { opacity: 1; transform: rotate(45deg) scale(1); }
+    .check:focus-visible, .delete:focus-visible, .filter:focus-visible, .clear-button:focus-visible, .add-button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      outline-offset: 2px;
+    }
+    @keyframes tick {
+      45% { transform: scale(1.16); }
+    }
+    .task-text {
+      flex: 1;
+      overflow-wrap: anywhere;
+      transition: color .2s, opacity .2s;
+    }
+    .task.is-complete .task-text { color: var(--muted); opacity: .7; text-decoration: line-through; text-decoration-thickness: 1px; }
+    .delete {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      place-items: center;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .16s, background .16s, color .16s;
+    }
+    .task:hover .delete, .delete:focus-visible { opacity: 1; }
+    .delete:hover { background: color-mix(in srgb, #e65454 12%, transparent); color: #d84a4a; }
+    .delete svg { width: 16px; height: 16px; }
+    @media (hover: none) { .delete { opacity: 1; } }
+
+    .empty {
+      padding: 30px 16px 34px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+    .empty-icon {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      margin: 0 auto 10px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .empty-icon svg { width: 20px; height: 20px; }
+    .empty p { margin: 0; }
+
+    .card-footer {
+      display: flex;
+      min-height: 59px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 18px;
+      border-top: 1px solid var(--line);
+    }
+    .filters { display: flex; gap: 3px; }
+    .filter, .clear-button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      transition: color .16s, background .16s;
+    }
+    .filter { padding: 6px 9px; border-radius: 7px; }
+    .filter:hover, .clear-button:hover { color: var(--ink); }
+    .filter[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+    .clear-button { padding: 6px 0 6px 7px; white-space: nowrap; }
+    .clear-button:disabled { visibility: hidden; }
+    .hint { margin: 18px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    kbd {
+      padding: 2px 5px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      font: inherit;
+      font-size: 11px;
+    }
+
+    @media (max-width: 420px) {
+      body { padding: 42px 14px 36px; }
+      .composer { padding: 14px; }
+      .card-footer { padding-inline: 13px; }
+      .filter { padding-inline: 7px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9L12 3Z" fill="currentColor"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" fill="currentColor"/></svg>
+        </span>
+        Daylight
+      </div>
+      <h1>A little more focus.</h1>
+      <p class="subtitle">Make room for what matters today.</p>
+    </header>
+
+    <section class="list-card" aria-label="To-do list">
+      <form class="composer" id="task-form">
+        <input id="task-input" type="text" maxlength="180" placeholder="Add a task to your day..." aria-label="New task" autocomplete="off">
+        <button class="add-button" type="submit" aria-label="Add task">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </form>
+
+      <div class="list-heading">
+        <h2 id="list-title">Your tasks</h2>
+        <span class="remaining" id="remaining" aria-live="polite"></span>
+      </div>
+      <div class="task-list" id="task-list"></div>
+      <footer class="card-footer">
+        <div class="filters" role="group" aria-label="Filter tasks">
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="filter" type="button" data-filter="active" aria-pressed="false">Active</button>
+          <button class="filter" type="button" data-filter="completed" aria-pressed="false">Done</button>
+        </div>
+        <button class="clear-button" id="clear-completed" type="button">Clear done</button>
+      </footer>
+    </section>
+    <p class="hint">A small step is still a step. <kbd>Enter</kbd> to add a task</p>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "daylight-tasks-v1";
+      const examples = [
+        { id: "sample-1", text: "Plan the week and pick one priority", completed: false },
+        { id: "sample-2", text: "Take a proper lunch break", completed: false },
+        { id: "sample-3", text: "Send a quick check-in to Alex", completed: false }
+      ];
+      const form = document.querySelector("#task-form");
+      const input = document.querySelector("#task-input");
+      const list = document.querySelector("#task-list");
+      const remaining = document.querySelector("#remaining");
+      const clearButton = document.querySelector("#clear-completed");
+      const filters = document.querySelector(".filters");
+      let activeFilter = "all";
+      let tasks = loadTasks();
+
+      function loadTasks() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved === null) return examples;
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed)
+            ? parsed.filter(task => task && typeof task.id === "string" && typeof task.text === "string" && typeof task.completed === "boolean")
+            : examples;
+        } catch (error) {
+          console.error("Could not load saved tasks.", error);
+          return examples;
+        }
+      }
+
+      function saveTasks() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        } catch (error) {
+          console.error("Could not save tasks to localStorage.", error);
+        }
+      }
+
+      function render() {
+        list.replaceChildren();
+        const visibleTasks = tasks.filter(task =>
+          activeFilter === "all" ||
+          (activeFilter === "active" && !task.completed) ||
+          (activeFilter === "completed" && task.completed)
+        );
+        const remainingCount = tasks.filter(task => !task.completed).length;
+        remaining.textContent = `${remainingCount} left`;
+        clearButton.disabled = !tasks.some(task => task.completed);
+
+        if (visibleTasks.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.innerHTML = '<span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+          const message = document.createElement("p");
+          message.textContent = tasks.length === 0 ? "Your list is clear. Add something when you’re ready." : "Nothing to see here just yet.";
+          empty.append(message);
+          list.append(empty);
+          return;
+        }
+
+        for (const task of visibleTasks) {
+          const row = document.createElement("div");
+          row.className = `task${task.completed ? " is-complete" : ""}`;
+          const checkbox = document.createElement("input");
+          checkbox.className = "check";
+          checkbox.type = "checkbox";
+          checkbox.checked = task.completed;
+          checkbox.setAttribute("aria-label", `${task.completed ? "Mark incomplete" : "Complete"}: ${task.text}`);
+          checkbox.addEventListener("change", () => {
+            task.completed = checkbox.checked;
+            saveTasks();
+            render();
+          });
+          const text = document.createElement("span");
+          text.className = "task-text";
+          text.textContent = task.text;
+          const remove = document.createElement("button");
+          remove.className = "delete";
+          remove.type = "button";
+          remove.setAttribute("aria-label", `Delete: ${task.text}`);
+          remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          remove.addEventListener("click", () => {
+            tasks = tasks.filter(item => item.id !== task.id);
+            saveTasks();
+            render();
+          });
+          row.append(checkbox, text, remove);
+          list.append(row);
+        }
+      }
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) {
+          input.focus();
+          return;
+        }
+        tasks.unshift({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, text, completed: false });
+        saveTasks();
+        activeFilter = "all";
+        filters.querySelectorAll(".filter").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.filter === activeFilter)));
+        input.value = "";
+        render();
+        input.focus();
+      });
+
+      filters.addEventListener("click", event => {
+        const button = event.target.closest(".filter");
+        if (!button) return;
+        activeFilter = button.dataset.filter;
+        filters.querySelectorAll(".filter").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+        render();
+      });
+
+      clearButton.addEventListener("click", () => {
+        tasks = tasks.filter(task => !task.completed);
+        saveTasks();
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
